@@ -3,6 +3,9 @@ package models
 import (
 	"database/sql"
 	"log"
+	"net/http"
+
+	"github.com/gorilla/sessions"
 )
 
 type User struct {
@@ -63,4 +66,87 @@ func (u *User) Authenticate() (User, error) {
 func (u *User) GetByID() error {
 	// Pour ce template, nous ne faisons rien.
 	return nil
+}
+
+var store = sessions.NewCookieStore([]byte("your-secret-key")) // Remplacez par une clé secrète sécurisée
+
+// RegisterUser gère l'affichage du formulaire d'inscription (GET)
+// et le traitement du formulaire (POST)
+func RegisterUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		http.ServeFile(w, r, "./views/register.html")
+		return
+	}
+
+	// Pour POST : lecture des valeurs du formulaire
+	// Vérifiez d'abord que les valeurs ont été parsé
+	r.ParseForm()
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	if username == "" || password == "" {
+		http.Error(w, "Nom d'utilisateur et mot de passe requis", http.StatusBadRequest)
+		return
+	}
+
+	var user User
+	user.Username = username
+	user.Password = password
+
+	// Création factice de l'utilisateur (remplacez par votre logique réelle)
+	if err := user.Create(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	// Création d'une session et enregistrement de l'ID utilisateur
+	session, _ := store.Get(r, "session-name")
+	session.Values["user_id"] = user.ID
+	session.Save(r, w)
+
+	// Redirection vers la page d'accueil
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// LoginUser gère l'affichage du formulaire de connexion (GET)
+// et le traitement du formulaire (POST)
+func LoginUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		http.ServeFile(w, r, "./views/login.html")
+		return
+	}
+
+	// Pour POST : lecture des valeurs du formulaire
+	r.ParseForm()
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	if username == "" || password == "" {
+		http.Error(w, "Nom d'utilisateur et mot de passe requis", http.StatusBadRequest)
+		return
+	}
+
+	var user User
+	user.Username = username
+	user.Password = password
+
+	// Authentification factice (à remplacer par une logique réelle)
+	authUser, err := user.Authenticate()
+	if err != nil {
+		http.Error(w, "Identifiants invalides", http.StatusUnauthorized)
+		return
+	}
+
+	session, _ := store.Get(r, "session-name")
+	session.Values["user_id"] = authUser.ID
+	session.Save(r, w)
+
+	// Redirection vers la page d'accueil
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// LogoutUser déconnecte l'utilisateur et redirige vers la page d'accueil
+func LogoutUser(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session-name")
+	delete(session.Values, "user_id")
+	session.Save(r, w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

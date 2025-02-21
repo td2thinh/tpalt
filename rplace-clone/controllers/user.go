@@ -3,7 +3,7 @@ package controllers
 import (
 	"encoding/json"
 	"net/http"
-	"rplace-clone/models" // Remplacez par le chemin correct de votre module
+	"rplace-clone/models"
 
 	"github.com/gorilla/sessions"
 )
@@ -25,6 +25,14 @@ func RegisterUser(w http.ResponseWriter, r *http.Request) {
 
 	w.WriteHeader(http.StatusCreated)
 	json.NewEncoder(w).Encode(user)
+}
+
+func ServeLoginUser(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./views/login.html")
+}
+
+func ServerRegisterUser(w http.ResponseWriter, r *http.Request) {
+	http.ServeFile(w, r, "./views/register.html")
 }
 
 // LoginUser gère la connexion d'un utilisateur

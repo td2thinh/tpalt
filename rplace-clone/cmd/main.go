@@ -4,6 +4,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"rplace-clone/config"
 	"rplace-clone/routes"
 )
 
@@ -11,11 +12,11 @@ func main() {
 	// Récupération de la chaîne de connexion depuis la variable d'environnement ou utilisation d'une valeur par défaut
 	dsn := os.Getenv("DATABASE_URL")
 	if dsn == "" {
-		dsn = "postgres://youruser:yourpassword@localhost:5432/yourdb?sslmode=disable"
+		dsn = "postgresql://goplace_owner:npg_GuJfdK6SVxU7@ep-restless-sunset-a2qw5ay6-pooler.eu-central-1.aws.neon.tech/goplace?sslmode=require"
 	}
 
 	// Initialisation de la base de données
-	// config.InitDB(dsn)
+	config.InitDB(dsn)
 
 	log.Println("dsn: ", dsn)
 
