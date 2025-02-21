@@ -1,0 +1,26 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Canvas Collaboratif</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Canvas Collaboratif</h1>
+        <div id="canvas-container">
+            <canvas id="canvas" width="800" height="600"></canvas>
+        </div>
+        <div class="controls">
+            <input type="color" id="colorPicker" value="#000000">
+            <button id="clearCanvas">Effacer le Canvas</button>
+        </div>
+        <div id="users">
+            <h2>Utilisateurs Connectés</h2>
+            <ul id="userList"></ul>
+        </div>
+    </div>
+    <script src="/static/js/main.js"></script>
+</body>
+</html>
