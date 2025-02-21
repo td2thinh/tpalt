@@ -1,0 +1,26 @@
+//// filepath: /C:/Users/Freecs/Desktop/M2/GPSTL/tpalt/rplace-clone/views/canvas_create.html
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Créer un Canvas</title>
+    <link rel="stylesheet" href="/static/css/style.css">
+</head>
+
+<body>
+    <div class="container">
+        <h1>Créer un Canvas Collaboratif</h1>
+        <form action="/canvas" method="POST">
+            <label for="width">Largeur:</label>
+            <input type="number" name="width" id="width" required>
+            <label for="height">Hauteur:</label>
+            <input type="number" name="height" id="height" required>
+            <button type="submit" class="button">Créer</button>
+        </form>
+        <a href="/">Retour à l'accueil</a>
+    </div>
+</body>
+
+</html>

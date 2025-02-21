@@ -8,63 +8,88 @@ import (
 	"github.com/gorilla/sessions"
 )
 
-var store = sessions.NewCookieStore([]byte("your-secret-key")) // Remplacez par une clé secrète sécurisée
+var store = sessions.NewCookieStore([]byte("your-secret-key"))
 
-// RegisterUser gère l'inscription d'un nouvel utilisateur
+// RegisterUser gère l'inscription (GET affiche le formulaire, POST traite les données)
 func RegisterUser(w http.ResponseWriter, r *http.Request) {
-	var user models.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
+	session, _ := store.Get(r, "session-name")
+	if session.Values["user_id"] != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
 		return
 	}
+
+	if r.Method == http.MethodGet {
+		http.ServeFile(w, r, "./views/register.html")
+		return
+	}
+
+	// Pour POST, on lit depuis le formulaire
+	r.ParseForm()
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	if username == "" || password == "" {
+		http.Error(w, "Nom d'utilisateur et mot de passe requis", http.StatusBadRequest)
+		return
+	}
+
+	var user models.User
+	user.Username = username
+	user.Password = password
 
 	if err := user.Create(); err != nil {
 		http.Error(w, err.Error(), http.StatusInternalServerError)
 		return
 	}
 
-	w.WriteHeader(http.StatusCreated)
-	json.NewEncoder(w).Encode(user)
-}
-
-func ServeLoginUser(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./views/login.html")
-}
-
-func ServerRegisterUser(w http.ResponseWriter, r *http.Request) {
-	http.ServeFile(w, r, "./views/register.html")
-}
-
-// LoginUser gère la connexion d'un utilisateur
-func LoginUser(w http.ResponseWriter, r *http.Request) {
-	var user models.User
-	if err := json.NewDecoder(r.Body).Decode(&user); err != nil {
-		http.Error(w, err.Error(), http.StatusBadRequest)
-		return
-	}
-
-	existingUser, err := user.Authenticate()
-	if err != nil {
-		http.Error(w, err.Error(), http.StatusUnauthorized)
-		return
-	}
-
-	session, _ := store.Get(r, "session-name")
-	session.Values["user_id"] = existingUser.ID
+	session, _ = store.Get(r, "session-name")
+	session.Values["user_id"] = user.ID
 	session.Save(r, w)
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode(existingUser)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-// LogoutUser gère la déconnexion d'un utilisateur
+// LoginUser gère la connexion (GET affiche le formulaire, POST traite l'authentification)
+func LoginUser(w http.ResponseWriter, r *http.Request) {
+	session, _ := store.Get(r, "session-name")
+	if session.Values["user_id"] != nil {
+		http.Redirect(w, r, "/", http.StatusSeeOther)
+		return
+	}
+
+	if r.Method == http.MethodGet {
+		http.ServeFile(w, r, "./views/login.html")
+		return
+	}
+
+	r.ParseForm()
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	if username == "" || password == "" {
+		http.Error(w, "Nom d'utilisateur et mot de passe requis", http.StatusBadRequest)
+		return
+	}
+
+	var user models.User
+	user.Username = username
+	user.Password = password
+
+	authUser, err := user.Authenticate()
+	if err != nil {
+		http.Error(w, "Identifiants invalides", http.StatusUnauthorized)
+		return
+	}
+
+	session, _ = store.Get(r, "session-name")
+	session.Values["user_id"] = authUser.ID
+	session.Save(r, w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// LogoutUser déconnecte l'utilisateur
 func LogoutUser(w http.ResponseWriter, r *http.Request) {
 	session, _ := store.Get(r, "session-name")
 	delete(session.Values, "user_id")
 	session.Save(r, w)
-
-	w.WriteHeader(http.StatusOK)
-	json.NewEncoder(w).Encode("Logged out successfully")
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
 // GetCurrentUser récupère les informations de l'utilisateur connecté
@@ -84,4 +109,33 @@ func GetCurrentUser(w http.ResponseWriter, r *http.Request) {
 	}
 
 	json.NewEncoder(w).Encode(user)
+}
+
+func ServerRegisterUser(w http.ResponseWriter, r *http.Request) {
+	if r.Method == http.MethodGet {
+		http.ServeFile(w, r, "./views/register.html")
+		return
+	}
+
+	r.ParseForm()
+	username := r.FormValue("username")
+	password := r.FormValue("password")
+	if username == "" || password == "" {
+		http.Error(w, "Nom d'utilisateur et mot de passe requis", http.StatusBadRequest)
+		return
+	}
+
+	var user models.User
+	user.Username = username
+	user.Password = password
+
+	if err := user.Create(); err != nil {
+		http.Error(w, err.Error(), http.StatusInternalServerError)
+		return
+	}
+
+	session, _ := store.Get(r, "session-name")
+	session.Values["user_id"] = user.ID
+	session.Save(r, w)
+	http.Redirect(w, r, "/", http.StatusSeeOther)
 }

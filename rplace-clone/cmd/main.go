@@ -21,7 +21,7 @@ func main() {
 	log.Println("dsn: ", dsn)
 
 	// Initialisation de Redis (optionnel)
-	// config.InitRedis()
+	config.InitRedis()
 
 	// Configuration du routeur via InitializeRoutes (à la place de ConfigureRoutes)
 	router := routes.InitializeRoutes()

@@ -2,22 +2,31 @@ package models
 
 import (
 	"database/sql"
+	"errors"
 	"log"
 	"net/http"
 
+	"rplace-clone/config"
+
 	"github.com/gorilla/sessions"
+	_ "github.com/lib/pq"
+	"golang.org/x/crypto/bcrypt"
 )
 
 type User struct {
 	ID       int    `json:"id"`
 	Username string `json:"username"`
-	Password string `json:"password"` // Stocker le mot de passe de manière sécurisée
+	Password string `json:"password"` // stocke le hash du mot de passe
 }
 
-// CreateUser crée un nouvel utilisateur dans la base de données
+// CreateUser crée un nouvel utilisateur en hachant le mot de passe
 func CreateUser(db *sql.DB, username, password string) (User, error) {
 	var user User
-	err := db.QueryRow("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", username, password).Scan(&user.ID)
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return user, err
+	}
+	err = db.QueryRow("INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id", username, string(hash)).Scan(&user.ID)
 	if err != nil {
 		log.Println("Erreur lors de la création de l'utilisateur:", err)
 		return user, err
@@ -48,24 +57,43 @@ func GetUserByUsername(db *sql.DB, username string) (User, error) {
 	return user, nil
 }
 
-// Create crée un utilisateur de manière factice
+// Create insère l'utilisateur en hachant le mot de passe
 func (u *User) Create() error {
-	// Simuler la création d'un utilisateur avec un ID fixe
-	u.ID = 1
+	db := sqlDB() // fonction locale récupérant la DB
+	hash, err := bcrypt.GenerateFromPassword([]byte(u.Password), bcrypt.DefaultCost)
+	if err != nil {
+		return err
+	}
+	query := "INSERT INTO users (username, password) VALUES ($1, $2) RETURNING id"
+	err = db.QueryRow(query, u.Username, string(hash)).Scan(&u.ID)
+	if err != nil {
+		log.Println("Erreur lors de la création de l'utilisateur:", err)
+		return err
+	}
 	return nil
 }
 
-// Authenticate simule l'authentification de l'utilisateur
+// Authenticate vérifie que le nom d'utilisateur et le mot de passe correspondent via bcrypt
 func (u *User) Authenticate() (User, error) {
-	// Retourner l'utilisateur avec un ID défini
-	u.ID = 1
-	return *u, nil
+	db := sqlDB()
+	var user User
+	query := "SELECT id, username, password FROM users WHERE username = $1"
+	err := db.QueryRow(query, u.Username).Scan(&user.ID, &user.Username, &user.Password)
+	if err != nil {
+		return user, err
+	}
+	// Comparaison du hash stocké et du mot de passe fourni
+	if bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(u.Password)) != nil {
+		return user, errors.New("mot de passe invalide")
+	}
+	return user, nil
 }
 
-// GetByID simule la récupération d'un utilisateur par son ID
+// GetByID récupère un utilisateur par son ID depuis la base de données
 func (u *User) GetByID() error {
-	// Pour ce template, nous ne faisons rien.
-	return nil
+	db := sqlDB()
+	query := "SELECT id, username, password FROM users WHERE id = $1"
+	return db.QueryRow(query, u.ID).Scan(&u.ID, &u.Username, &u.Password)
 }
 
 var store = sessions.NewCookieStore([]byte("your-secret-key")) // Remplacez par une clé secrète sécurisée
@@ -149,4 +177,9 @@ func LogoutUser(w http.ResponseWriter, r *http.Request) {
 	delete(session.Values, "user_id")
 	session.Save(r, w)
 	http.Redirect(w, r, "/", http.StatusSeeOther)
+}
+
+// sqlDB est une fonction utilitaire qui récupère la connexion DB
+func sqlDB() *sql.DB {
+	return config.GetDB()
 }
