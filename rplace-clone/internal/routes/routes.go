@@ -26,8 +26,9 @@ func SetupRouter(pgDB *gorm.DB, fbDB *db.Client) *gin.Engine {
 	cfg, _ := config.LoadConfig()
 	jwtService, _ := auth.NewJWTService(cfg.JWTSecret, cfg.JWTExpiration)
 
-	// Initialize auth handler
+	// Initialize handlers
 	authHandler := handlers.NewAuthHandler(pgDB, jwtService)
+	canvasHandler := handlers.NewCanvasHandler(pgDB)
 
 	// Public routes
 	r.GET("/", func(c *gin.Context) {
@@ -44,8 +45,8 @@ func SetupRouter(pgDB *gorm.DB, fbDB *db.Client) *gin.Engine {
 		api.POST("/auth/register", authHandler.Register)
 		api.POST("/auth/login", authHandler.Login)
 
-		// Public API routes
-		api.GET("/canvases", listCanvasesHandler)
+		// Public API routes - list public canvases
+		api.GET("/canvases", canvasHandler.ListCanvases)
 
 		// Protected routes
 		protected := api.Group("")
@@ -63,9 +64,11 @@ func SetupRouter(pgDB *gorm.DB, fbDB *db.Client) *gin.Engine {
 				})
 			})
 
-			protected.POST("/canvas", createCanvasHandler)
-			protected.GET("/canvas/:id", getCanvasHandler)
-			protected.POST("/canvas/:id/pixel", updatePixelHandler)
+			// Canvas routes
+			protected.POST("/canvas", canvasHandler.CreateCanvas)
+			protected.GET("/canvas/:id", canvasHandler.GetCanvas)
+			protected.GET("/canvas/:id/pixels", canvasHandler.GetCanvasPixels)
+			protected.POST("/canvas/:id/pixel", canvasHandler.UpdatePixel)
 		}
 	}
 
@@ -77,33 +80,5 @@ func healthCheckHandler(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"status":  "healthy",
 		"message": "Server is running",
-	})
-}
-
-// Placeholder for list canvases handler
-func listCanvasesHandler(c *gin.Context) {
-	c.JSON(http.StatusOK, gin.H{
-		"canvases": []string{}, // Will fetch from database later
-	})
-}
-
-// Placeholder for create canvas handler
-func createCanvasHandler(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{
-		"message": "Not implemented yet",
-	})
-}
-
-// Placeholder for get canvas handler
-func getCanvasHandler(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{
-		"message": "Not implemented yet",
-	})
-}
-
-// Placeholder for update pixel handler
-func updatePixelHandler(c *gin.Context) {
-	c.JSON(http.StatusNotImplemented, gin.H{
-		"message": "Not implemented yet",
 	})
 }
