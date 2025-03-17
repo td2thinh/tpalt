@@ -5,14 +5,20 @@ import (
 	"gorm.io/gorm"
 )
 
-func NewPostgresDB(connectionString string) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(connectionString), &gorm.Config{})
+var database *gorm.DB
+
+// InitPostgres initializes the Postgres database connection
+func InitPostgres(dsn string) error {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
 	if err != nil {
-		return nil, err
+		return err
 	}
 
-	// Auto migrate models
-	// db.AutoMigrate(&models.User{}) // Add other models as needed
+	database = db
+	return nil
+}
 
-	return db, nil
+// GetDB returns the initialized Postgres database connection
+func GetDB() *gorm.DB {
+	return database
 }

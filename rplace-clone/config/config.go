@@ -11,6 +11,7 @@ import (
 type Config struct {
 	DBConnString    string
 	JWTSecret       string
+	JWTExpiration   string
 	FirebaseURL     string
 	FirebaseKeyPath string // Path to Firebase service account key file
 }
@@ -27,12 +28,13 @@ func getEnv(key, defaultValue string) string {
 func LoadConfig() (*Config, error) {
 	err := godotenv.Load()
 	if err != nil {
-		log.Fatal("Error loading .env file")
+		log.Println("Warning: Error loading .env file, using environment variables")
 	}
-	// TODO: Actually have ENV file
+
 	return &Config{
-		DBConnString:    getEnv("DB_CONN_STRING", "postgresql://goplace_owner:npg_GuJfdK6SVxU7@ep-restless-sunset-a2qw5ay6-pooler.eu-central-1.aws.neon.tech/goplace?sslmode=require"),
-		JWTSecret:       getEnv("JWT_SECRET", "668e3a21cddb5334ea8ff433aab2af473286359437719a096d9ca1f586657ed9"),
+		DBConnString:    getEnv("DB_CONN_STRING", "postgresql://goplace_owner:npg_BjWIhr7YxA9Z@ep-autumn-term-a2ll8hw0-pooler.eu-central-1.aws.neon.tech/goplace?sslmode=require"),
+		JWTSecret:       getEnv("JWT_SECRET", "4a22c05459aa256790870ff46418c6f88a3cba6810bdd480b28b12b665b2f679"),
+		JWTExpiration:   getEnv("JWT_EXPIRATION", "24h"),
 		FirebaseURL:     getEnv("FIREBASE_CREDS", "https://goplace-f33c9-default-rtdb.europe-west1.firebasedatabase.app/"),
 		FirebaseKeyPath: getEnv("FIREBASE_KEY_PATH", "serviceAccountKey.json"),
 	}, nil

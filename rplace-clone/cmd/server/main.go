@@ -11,6 +11,7 @@ import (
 
 	"rplace-clone/config"
 	"rplace-clone/internal/db"
+	"rplace-clone/internal/models"
 	"rplace-clone/internal/routes"
 )
 
@@ -28,13 +29,17 @@ func main() {
 	}
 
 	// Initialize Postgres
-	pgDB, err := db.NewPostgresDB(cfg.DBConnString)
-	if err != nil {
+	if err := db.InitPostgres(cfg.DBConnString); err != nil {
 		log.Fatalf("Failed to initialize Postgres: %v", err)
 	}
 
+	// Migrate the database
+	if err := db.GetDB().AutoMigrate(&models.User{}, &models.Canvas{}); err != nil {
+		log.Fatalf("Failed to migrate database: %v", err)
+	}
+
 	// Setup router using Gin
-	router := routes.SetupRouter(pgDB, db.GetClient())
+	router := routes.SetupRouter(db.GetDB(), db.GetClient())
 
 	// Start server
 	srv := &http.Server{
