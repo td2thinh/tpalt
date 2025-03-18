@@ -85,7 +85,8 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
-	duration, _ := time.ParseDuration(config.GetConfig().JWTExpiration)
+	cfg, _ := config.LoadConfig()
+	duration, _ := time.ParseDuration(cfg.JWTExpiration)
 
 	// Return user and token
 	c.JSON(http.StatusCreated, AuthResponse{
@@ -124,7 +125,8 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
-	duration, _ := time.ParseDuration(config.GetConfig().JWTExpiration)
+	cfg, _ := config.LoadConfig()
+	duration, _ := time.ParseDuration(cfg.JWTExpiration)
 
 	// Return user and token
 	c.JSON(http.StatusCreated, AuthResponse{

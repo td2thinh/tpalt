@@ -12,12 +12,19 @@ import (
 	"rplace-clone/config"
 	"rplace-clone/internal/models"
 	"rplace-clone/internal/routes"
+	"rplace-clone/internal/services"
+	socketio "rplace-clone/internal/socketio"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
 )
 
-var database *gorm.DB
+var (
+	database        *gorm.DB
+	socketManager   *socketio.Manager
+	canvasService   *services.CanvasService
+	snapshotService *services.SnapshotService
+)
 
 // InitPostgres initializes the Postgres database connection
 func InitPostgres(dsn string) error {
@@ -42,9 +49,6 @@ func main() {
 		log.Fatalf("Failed to load config: %v", err)
 	}
 
-	// Initialize Firebase
-	ctx := context.Background()
-
 	// Initialize Postgres
 	if err := InitPostgres(cfg.DBConnString); err != nil {
 		log.Fatalf("Failed to initialize Postgres: %v", err)
@@ -54,6 +58,7 @@ func main() {
 	if err := database.AutoMigrate(&models.User{}, &models.Canvas{}, &models.CanvasSnapshot{}); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
+
 	// Setup router using Gin
 	router := routes.SetupRouter(GetDB())
 
@@ -76,6 +81,14 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Println("Shutting down server...")
+
+	// Shutdown services
+	if canvasService != nil {
+		canvasService.Shutdown()
+	}
+	if snapshotService != nil {
+		snapshotService.Shutdown()
+	}
 
 	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
 	defer cancel()

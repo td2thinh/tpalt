@@ -14,12 +14,8 @@ import (
 // User represents a user in the system
 type User struct {
 	gorm.Model
-	ID        uint           `json:"id" gorm:"primaryKey"`
-	Username  string         `json:"username" gorm:"uniqueIndex;size:32" validate:"required,min=3,max=32"`
-	Password  string         `json:"-" gorm:"size:100" validate:"required,min=6"`
-	CreatedAt time.Time      `json:"created_at"`
-	UpdatedAt time.Time      `json:"updated_at"`
-	DeletedAt gorm.DeletedAt `json:"-" gorm:"index"`
+	Username string `json:"username" gorm:"uniqueIndex;size:32" validate:"required,min=3,max=32"`
+	Password string `json:"-" gorm:"size:100" validate:"required,min=6"`
 }
 
 // UserClaims represents the JWT claims for a user
@@ -64,14 +60,14 @@ func (pg *PixelGrid) Scan(value interface{}) error {
 // Canvas model for database storage
 type Canvas struct {
 	gorm.Model
-	UUID        string `gorm:"uniqueIndex;not null"`
-	Name        string `gorm:"not null"`
-	Description string
-	Size        int       `gorm:"not null"`
-	CreatorID   uint      `gorm:"not null"`
-	Creator     User      `gorm:"foreignKey:CreatorID"`
-	Pixels      PixelGrid `gorm:"type:jsonb"`
-	ActiveUsers int       `gorm:"-"` // Not stored in DB, managed in memory
+	UUID        string    `json:"uuid" gorm:"uniqueIndex;not null"`
+	Name        string    `json:"name" gorm:"not null"`
+	Description string    `json:"description"`
+	Size        int       `json:"size" gorm:"not null"`
+	CreatorID   uint      `json:"creator_id" gorm:"not null"`
+	Creator     User      `json:"-" gorm:"foreignKey:CreatorID"`
+	Pixels      PixelGrid `json:"pixels" gorm:"type:jsonb"`
+	ActiveUsers int       `json:"active_users" gorm:"-"` // Not stored in DB, managed in memory
 }
 
 // CanvasSnapshot stores PNG snapshots of the canvas

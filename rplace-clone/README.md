@@ -1,72 +1,129 @@
 # r/place Clone
 
-## Description
+A real-time collaborative pixel canvas inspired by Reddit's r/place, built with Go, Socket.IO, and React.
 
-Ce projet est une application web inspirée de r/place, permettant aux utilisateurs connectés de créer des canvases collaboratifs. Les utilisateurs peuvent créer un canvas, rejoindre un canvas existant et interagir avec celui-ci en temps réel. L'application utilise PostgreSQL pour la gestion des données, Redis pour la gestion des bitmaps, et est déployée avec Docker.
+## Features
 
-## Fonctionnalités
+- Real-time pixel placement and updates using Socket.IO
+- User authentication with JWT
+- Create and join multiple canvases
+- Real-time active user tracking
+- Periodic canvas snapshots
+- Responsive design
 
-- Création de canvases par des utilisateurs connectés.
-- Possibilité pour d'autres utilisateurs de rejoindre un canvas.
-- Interface mobile-first pour une expérience utilisateur optimale sur tous les appareils.
-- Mises à jour en temps réel des canvases via WebSocket.
-- Gestion des utilisateurs, y compris l'inscription et la connexion.
+## Tech Stack
 
-## Technologies Utilisées
+### Backend
 
-- **Backend**: Golang
-- **Base de données**: PostgreSQL
-- **Cache**: Redis
-- **Containerisation**: Docker
-- **Frontend**: HTML, CSS, JavaScript
+- Go
+- Gin Web Framework
+- GORM (PostgreSQL)
+- Socket.IO (go-socket.io)
+- JWT Authentication
 
-## Installation
+### Frontend
 
-### Prérequis
+- React
+- Vite
+- Socket.IO Client
+- React Router
+- Axios
+- React Zoom Pan Pinch
 
-- Go (version 1.17 ou supérieure)
-- PostgreSQL
-- Redis
-- Docker
+## Project Structure
 
-### Étapes d'installation
-
-1. Clonez le dépôt :
-
-   ```bash
-   git clone <url-du-dépôt>
-   cd rplace-clone
-   ```
-
-2. Configurez votre base de données PostgreSQL et Redis.
-
-3. Modifiez le fichier `config/database.go` pour inclure vos informations de connexion.
-
-4. Construisez et exécutez les conteneurs Docker :
-
-   ```bash
-   docker-compose up --build
-   ```
-
-5. Accédez à l'application via `http://localhost:8080`.
-
-## Utilisation
-
-- Inscrivez-vous ou connectez-vous pour accéder aux fonctionnalités de création et de gestion des canvases.
-- Créez un nouveau canvas ou rejoignez un canvas existant pour commencer à collaborer.
-
-## Tests
-
-Des tests unitaires sont inclus pour les contrôleurs et les modèles. Vous pouvez les exécuter avec la commande suivante :
-
-```bash
-go test ./...
+```
+rplace-clone/
+├── cmd/                  # Application entry points
+│   └── server/           # Main server application
+├── config/               # Configuration
+├── internal/             # Internal packages
+│   ├── auth/             # Authentication
+│   ├── handlers/         # HTTP handlers
+│   ├── middleware/       # Middleware
+│   ├── models/           # Data models
+│   ├── routes/           # API routes
+│   ├── services/         # Business logic
+│   └── socketio/         # Socket.IO implementation
+├── frontend/             # React frontend
+│   ├── public/           # Static assets
+│   └── src/              # React source code
+│       ├── components/   # React components
+│       ├── context/      # React context providers
+│       ├── pages/        # Page components
+│       └── services/     # API and Socket.IO services
+└── snapshots/            # Canvas snapshots storage
 ```
 
-## Contribuer
+## Getting Started
 
-Les contributions sont les bienvenues ! Veuillez soumettre une demande de tirage pour toute fonctionnalité ou correction de bogue.
+### Prerequisites
+
+- Go 1.20+
+- Node.js 16+
+- PostgreSQL
+
+### Backend Setup
+
+1. Clone the repository
+2. Set up environment variables in `.env` file
+3. Run the server:
+
+```bash
+cd rplace-clone
+go run cmd/server/main.go
+```
+
+### Frontend Setup
+
+1. Install dependencies:
+
+```bash
+cd rplace-clone/frontend
+npm install
+```
+
+2. Start the development server:
+
+```bash
+npm run dev
+```
+
+## API Endpoints
+
+### Authentication
+
+- `POST /api/auth/register` - Register a new user
+- `POST /api/auth/login` - Login a user
+
+### Canvases
+
+- `GET /api/canvases` - List all canvases
+- `GET /api/canvas/:id` - Get canvas details
+- `GET /api/canvas/:id/pixels` - Get canvas pixels
+- `POST /api/canvas` - Create a new canvas (authenticated)
+- `POST /api/canvas/:id/pixel` - Update a pixel (authenticated)
+- `GET /api/canvas/:id/snapshot` - Get latest canvas snapshot
+- `POST /api/canvas/:id/snapshot` - Create a canvas snapshot (authenticated)
+- `GET /api/snapshot/:id` - Serve a canvas snapshot image
+
+## Socket.IO Events
+
+### Client to Server
+
+- `authenticate` - Authenticate with JWT token
+- `join_canvas` - Join a canvas room
+- `leave_canvas` - Leave a canvas room
+- `place_pixel` - Place a pixel on the canvas
+- `ping` - Keep connection alive
+
+### Server to Client
+
+- `authenticated` - Authentication response
+- `joined_canvas` - Joined canvas confirmation
+- `pixel_update` - Pixel update notification
+- `active_users` - Active users count update
 
 ## License
 
-Ce projet est sous licence MIT. Veuillez consulter le fichier LICENSE pour plus de détails.
+MIT
