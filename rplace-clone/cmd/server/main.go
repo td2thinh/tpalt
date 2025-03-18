@@ -10,10 +10,30 @@ import (
 	"time"
 
 	"rplace-clone/config"
-	"rplace-clone/internal/db"
 	"rplace-clone/internal/models"
 	"rplace-clone/internal/routes"
+
+	"gorm.io/driver/postgres"
+	"gorm.io/gorm"
 )
+
+var database *gorm.DB
+
+// InitPostgres initializes the Postgres database connection
+func InitPostgres(dsn string) error {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return err
+	}
+
+	database = db
+	return nil
+}
+
+// GetDB returns the initialized Postgres database connection
+func GetDB() *gorm.DB {
+	return database
+}
 
 func main() {
 	// Load configuration
@@ -24,22 +44,18 @@ func main() {
 
 	// Initialize Firebase
 	ctx := context.Background()
-	if err := db.InitFirebase(ctx, cfg.FirebaseURL, cfg.FirebaseKeyPath); err != nil {
-		log.Fatalf("Failed to initialize Firebase: %v", err)
-	}
 
 	// Initialize Postgres
-	if err := db.InitPostgres(cfg.DBConnString); err != nil {
+	if err := InitPostgres(cfg.DBConnString); err != nil {
 		log.Fatalf("Failed to initialize Postgres: %v", err)
 	}
 
 	// Migrate the database
-	if err := db.GetDB().AutoMigrate(&models.User{}, &models.Canvas{}); err != nil {
+	if err := database.AutoMigrate(&models.User{}, &models.Canvas{}, &models.CanvasSnapshot{}); err != nil {
 		log.Fatalf("Failed to migrate database: %v", err)
 	}
-
 	// Setup router using Gin
-	router := routes.SetupRouter(db.GetDB(), db.GetClient())
+	router := routes.SetupRouter(GetDB())
 
 	// Start server
 	srv := &http.Server{

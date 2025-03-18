@@ -2,10 +2,12 @@ package handlers
 
 import (
 	"net/http"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
+	"rplace-clone/config"
 	"rplace-clone/internal/auth"
 	"rplace-clone/internal/models"
 )
@@ -83,11 +85,13 @@ func (h *AuthHandler) Register(c *gin.Context) {
 		return
 	}
 
+	duration, _ := time.ParseDuration(config.GetConfig().JWTExpiration)
+
 	// Return user and token
 	c.JSON(http.StatusCreated, AuthResponse{
 		Token:     token,
 		User:      &user,
-		ExpiresIn: 86400, // 24 hours in seconds
+		ExpiresIn: int64(duration.Seconds()),
 	})
 }
 
@@ -120,10 +124,12 @@ func (h *AuthHandler) Login(c *gin.Context) {
 		return
 	}
 
+	duration, _ := time.ParseDuration(config.GetConfig().JWTExpiration)
+
 	// Return user and token
-	c.JSON(http.StatusOK, AuthResponse{
+	c.JSON(http.StatusCreated, AuthResponse{
 		Token:     token,
 		User:      &user,
-		ExpiresIn: 86400, // 24 hours in seconds
+		ExpiresIn: int64(duration.Seconds()),
 	})
 }

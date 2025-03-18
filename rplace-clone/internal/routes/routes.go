@@ -3,7 +3,6 @@ package routes
 import (
 	"net/http"
 
-	"firebase.google.com/go/v4/db"
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
 
@@ -13,7 +12,7 @@ import (
 )
 
 // SetupRouter sets up the routes for the application
-func SetupRouter(pgDB *gorm.DB, fbDB *db.Client) *gin.Engine {
+func SetupRouter(pgDB *gorm.DB) *gin.Engine {
 	r := gin.Default()
 
 	// Middleware
@@ -23,7 +22,7 @@ func SetupRouter(pgDB *gorm.DB, fbDB *db.Client) *gin.Engine {
 	r.Static("/static", "./static")
 
 	// Initialize JWT service
-	cfg, _ := config.LoadConfig()
+	cfg := config.GetConfig()
 	jwtService, _ := auth.NewJWTService(cfg.JWTSecret, cfg.JWTExpiration)
 
 	// Initialize handlers
