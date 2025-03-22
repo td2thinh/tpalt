@@ -43,7 +43,7 @@ const CanvasPreview = ({ canvasId, size }) => {
   }, [canvasId, size])
 
   return (
-    <div className="canvas-preview-container">
+    <div className="relative w-[100px] h-[100px]">
       {!loaded && <div className="absolute inset-0 flex items-center justify-center">Loading...</div>}
       <canvas 
         ref={canvasRef} 
