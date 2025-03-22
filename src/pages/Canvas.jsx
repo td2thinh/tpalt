@@ -33,6 +33,7 @@ const Canvas = ({ user }) => {
   const [lastDistance, setLastDistance] = useState(0)
   const [isDrawMode, setIsDrawMode] = useState(true)
   const [cursorPos, setCursorPos] = useState({ x: -1, y: -1 })
+  const initializedRef = useRef(false)
 
   useEffect(() => {
     const fetchCanvas = async () => {
@@ -73,21 +74,27 @@ const Canvas = ({ user }) => {
     fetchCanvas()
   }, [id, user])
 
-  // Initialize stage position when canvas loads
+  // Initialize stage position when canvas loads - only on first load
   useEffect(() => {
     if (!canvas || !containerRef.current) return
 
-    // Center the canvas initially
-    const containerWidth = containerRef.current.offsetWidth
-    const containerHeight = containerRef.current.offsetHeight
-    const [canvasWidth, canvasHeight] = canvas.size
+    // Only center the canvas if we haven't centered it before
+    // This prevents the view from jumping when zoom changes
+    if (!initializedRef.current) {
+      const containerWidth = containerRef.current.offsetWidth
+      const containerHeight = containerRef.current.offsetHeight
+      const [canvasWidth, canvasHeight] = canvas.size
 
-    // Calculate the center position
-    setPosition({
-      x: (containerWidth / 2) - (canvasWidth * scale / 2),
-      y: (containerHeight / 2) - (canvasHeight * scale / 2)
-    })
-  }, [canvas, scale, containerRef.current])
+      // Calculate the center position
+      setPosition({
+        x: (containerWidth / 2) - (canvasWidth * scale / 2),
+        y: (containerHeight / 2) - (canvasHeight * scale / 2)
+      })
+
+      // Mark as initialized so we don't re-center on scale changes
+      initializedRef.current = true
+    }
+  }, [canvas, containerRef.current])
 
   // Cooldown timer
   useEffect(() => {
@@ -107,30 +114,71 @@ const Canvas = ({ user }) => {
         stageRef.current.width(containerRef.current.offsetWidth)
         stageRef.current.height(containerRef.current.offsetHeight)
 
-        // Recenter canvas on resize
-        if (canvas) {
-          const containerWidth = containerRef.current.offsetWidth
-          const containerHeight = containerRef.current.offsetHeight
-          const [canvasWidth, canvasHeight] = canvas.size
-
-          setPosition({
-            x: (containerWidth / 2) - (canvasWidth * scale / 2),
-            y: (containerHeight / 2) - (canvasHeight * scale / 2)
-          })
-        }
+        // Don't recenter on resize as it would disrupt user navigation
+        // Instead, maintain relative position by not changing position
       }
     }
 
     window.addEventListener('resize', handleResize)
     return () => window.removeEventListener('resize', handleResize)
-  }, [canvas, scale])
+  }, [canvas])
 
   const handleZoomIn = () => {
-    setScale(prev => Math.min(prev * 1.5, 40))
+    const scaleBy = 1.5
+    const stage = stageRef.current
+
+    if (!stage) return
+
+    // Use center of the viewport as the focal point
+    const center = {
+      x: stage.width() / 2,
+      y: stage.height() / 2
+    }
+
+    const mousePointTo = {
+      x: (center.x - position.x) / scale,
+      y: (center.y - position.y) / scale
+    }
+
+    const newScale = Math.min(scale * scaleBy, 40)
+
+    // Calculate new position to zoom toward center of viewport
+    const newPos = {
+      x: center.x - mousePointTo.x * newScale,
+      y: center.y - mousePointTo.y * newScale
+    }
+
+    setScale(newScale)
+    setPosition(newPos)
   }
 
   const handleZoomOut = () => {
-    setScale(prev => Math.max(prev / 1.5, 1))
+    const scaleBy = 1.5
+    const stage = stageRef.current
+
+    if (!stage) return
+
+    // Use center of the viewport as the focal point
+    const center = {
+      x: stage.width() / 2,
+      y: stage.height() / 2
+    }
+
+    const mousePointTo = {
+      x: (center.x - position.x) / scale,
+      y: (center.y - position.y) / scale
+    }
+
+    const newScale = Math.max(scale / scaleBy, 1)
+
+    // Calculate new position to zoom toward center of viewport
+    const newPos = {
+      x: center.x - mousePointTo.x * newScale,
+      y: center.y - mousePointTo.y * newScale
+    }
+
+    setScale(newScale)
+    setPosition(newPos)
   }
 
   const handleResetZoom = () => {
@@ -332,7 +380,7 @@ const Canvas = ({ user }) => {
         <div className="reddit-canvas-info absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-reddit-bg bg-opacity-80 p-2 rounded shadow-md">
           <div className="flex items-center justify-between mb-1">
             <h1 className="reddit-title text-xl">{canvas.name}</h1>
-            
+
             {/* Info icon */}
             <div className="info-icon bg-reddit-blue text-white rounded-full w-6 h-6 flex items-center justify-center cursor-help relative group ml-2">
               <span className="text-sm font-bold">i</span>
@@ -436,13 +484,13 @@ const Canvas = ({ user }) => {
       </div>
 
       {/* Pixel coordinates display */}
-      {/* {cursorPos.x >= 0 && (
+      {cursorPos.x >= 0 && (
         <div className="pixel-info">
           <p>X: {cursorPos.x}, Y: {cursorPos.y}</p>
           <p>Zoom: {Math.round(scale * 100) / 100}x</p>
           <p>{isDrawMode ? "Draw Mode" : "Move Mode"}</p>
         </div>
-      )} */}
+      )}
 
       {/* Floating controls */}
       <div className="controls-container">
@@ -502,7 +550,6 @@ const Canvas = ({ user }) => {
           )}
         </div>
       </div>
-
     </div>
   )
 }
