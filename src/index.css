@@ -60,6 +60,61 @@ body {
   @apply bg-reddit-highlight border-reddit-border;
 }
 
+.dark-mode .reddit-navbar {
+  @apply bg-reddit-navbar border-b border-reddit-border;
+}
+
+.dark-mode .reddit-canvas-info {
+  @apply bg-reddit-highlight;
+}
+
+.light-mode {
+  @apply bg-reddit-gray text-reddit-darkgray;
+}
+
+.light-mode .reddit-card {
+  @apply bg-white border-gray-300;
+}
+
+.light-mode .reddit-navbar {
+  @apply bg-white border-b border-gray-300;
+}
+
+.light-mode .reddit-canvas-info {
+  @apply bg-white;
+}
+
+.light-mode .reddit-title {
+  @apply text-reddit-darkgray;
+}
+
+.light-mode .reddit-tooltip {
+  @apply bg-white text-reddit-darkgray;
+}
+
+/* Light mode specific styles for canvas preview */
+.light-mode .canvas-preview {
+  @apply border border-gray-300;
+}
+
+/* Light mode form inputs */
+.light-mode .reddit-input {
+  @apply bg-white border border-gray-300 text-reddit-darkgray focus:border-reddit-blue;
+}
+
 .header-cap {
   height: 56px;
+}
+
+/* Theme toggle button */
+.theme-toggle {
+  @apply p-2 rounded-full;
+}
+
+.dark-mode .theme-toggle {
+  @apply bg-reddit-highlight text-reddit-text hover:bg-reddit-border;
+}
+
+.light-mode .theme-toggle {
+  @apply bg-gray-100 text-reddit-darkgray hover:bg-gray-200;
 }

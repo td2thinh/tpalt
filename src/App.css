@@ -22,12 +22,23 @@
   @apply w-[100px] h-[100px] border border-reddit-border mb-2.5;
 }
 
+/* Base canvas card styles */
 .canvas-card {
-  @apply p-4 rounded-lg bg-reddit-highlight border border-reddit-border transition-transform duration-200 ease-in-out;
+  @apply p-4 rounded-lg transition-transform duration-200 ease-in-out;
 }
 
 .canvas-card:hover {
-  @apply -translate-y-1;
+  @apply -translate-y-1 shadow-md;
+}
+
+/* Dark mode canvas card */
+.dark-mode .canvas-card {
+  @apply bg-reddit-highlight border border-reddit-border;
+}
+
+/* Light mode canvas card */
+.light-mode .canvas-card {
+  @apply bg-white border border-gray-300;
 }
 
 .canvas-container {

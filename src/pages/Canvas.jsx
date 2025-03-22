@@ -1,9 +1,10 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useContext } from 'react'
 import { useParams, useNavigate, Link } from 'react-router-dom'
 import { doc, getDoc } from 'firebase/firestore'
 import { ref, onValue, update, serverTimestamp } from 'firebase/database'
 import { db, rtdb } from '../firebase/config'
 import { Stage, Layer, Rect } from 'react-konva'
+import { ThemeContext } from '../App'
 
 // Array of common colors for pixel art
 const COLORS = [
@@ -16,6 +17,7 @@ const COLORS = [
 const Canvas = ({ user }) => {
   const { id } = useParams()
   const navigate = useNavigate()
+  const { theme } = useContext(ThemeContext)
   const [canvas, setCanvas] = useState(null)
   const [pixels, setPixels] = useState({})
   const [selectedColor, setSelectedColor] = useState('#000000')
@@ -370,7 +372,7 @@ const Canvas = ({ user }) => {
   }
 
   return (
-    <div className="canvas-page dark-mode">
+    <div className={`canvas-page ${theme === 'dark' ? 'dark-mode' : 'light-mode'}`}>
       <div
         ref={containerRef}
         className={`canvas-area ${isDrawMode ? 'draw-cursor' : 'move-cursor'}`}

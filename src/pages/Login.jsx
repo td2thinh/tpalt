@@ -1,12 +1,14 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { signInWithPopup } from 'firebase/auth'
 import { auth, googleProvider } from '../firebase/config'
 import { useNavigate } from 'react-router-dom'
+import { ThemeContext } from '../App'
 
 const Login = () => {
   const [error, setError] = useState(null)
   const [loading, setLoading] = useState(false)
   const navigate = useNavigate()
+  const { theme } = useContext(ThemeContext)
 
   const handleGoogleLogin = async () => {
     try {
@@ -23,24 +25,27 @@ const Login = () => {
   }
 
   return (
-    <div className="flex justify-center items-center min-h-screen dark-mode">
+    <div className={`flex justify-center items-center min-h-screen ${theme === 'dark' ? 'dark-mode' : 'light-mode'}`}>
       <div className="reddit-card p-8 rounded-lg shadow-md w-full max-w-md">
         <h1 className="text-2xl font-bold text-center mb-6 text-reddit-orange">Welcome to r/Place Clone</h1>
-        
+
         <p className="text-reddit-muted mb-6 text-center">
           Sign in to create and edit pixel art canvases
         </p>
-        
+
         {error && (
           <div className="bg-reddit-red/20 border border-reddit-red text-reddit-red px-4 py-3 rounded mb-4">
             {error}
           </div>
         )}
-        
+
         <button
           onClick={handleGoogleLogin}
           disabled={loading}
-          className="w-full flex justify-center items-center gap-2 bg-reddit-highlight border border-reddit-border rounded-lg shadow-md px-6 py-3 text-sm font-medium text-reddit-text hover:bg-reddit-border focus:outline-none disabled:opacity-50 transition-colors"
+          className={`w-full flex justify-center items-center gap-2 rounded-lg shadow-md px-6 py-3 text-sm font-medium focus:outline-none disabled:opacity-50 transition-colors ${theme === 'dark'
+            ? 'bg-reddit-highlight border border-reddit-border text-reddit-text hover:bg-reddit-border'
+            : 'bg-white border border-gray-300 text-gray-700 hover:bg-gray-100'
+            }`}
         >
           <svg className="h-6 w-6" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -50,16 +55,16 @@ const Login = () => {
           </svg>
           <span>{loading ? 'Signing in...' : 'Sign in with Google'}</span>
         </button>
-        
-        <div className="mt-8 text-center">
+
+        {/* <div className="mt-8 text-center">
           <button 
             onClick={() => navigate('/')}
-            className="text-reddit-blue hover:underline text-sm"
+            className="bg-reddit-blue hover:bg-reddit-blueHover text-white px-4 py-2 rounded text-sm"
           >
             Continue as Guest
           </button>
-        </div>
-        
+        </div> */}
+
         <div className="mt-6 text-center text-xs text-reddit-muted">
           <p>
             By signing in, you agree to our Terms of Service and Privacy Policy.

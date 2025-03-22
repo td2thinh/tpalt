@@ -1,11 +1,13 @@
-import { useState } from 'react'
+import { useState, useContext } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
 import { ref, set } from 'firebase/database'
 import { db, rtdb } from '../firebase/config'
+import { ThemeContext } from '../App'
 
 const CreateCanvas = ({ user }) => {
   const navigate = useNavigate()
+  const { theme } = useContext(ThemeContext)
   const [name, setName] = useState('')
   const [width, setWidth] = useState(100)
   const [height, setHeight] = useState(100)
@@ -65,7 +67,7 @@ const CreateCanvas = ({ user }) => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-lg dark-mode min-h-screen">
+    <div className={`container mx-auto p-4 max-w-lg ${theme === 'dark' ? 'dark-mode' : 'light-mode'} min-h-screen`}>
       <h1 className="text-2xl font-bold mb-6 reddit-title">Create New Canvas</h1>
       
       {error && (
