@@ -64,18 +64,18 @@ const CreateCanvas = ({ user }) => {
   }
 
   return (
-    <div className="container mx-auto p-4 max-w-lg">
-      <h1 className="text-2xl font-bold mb-6">Create New Canvas</h1>
+    <div className="container mx-auto p-4 max-w-lg dark-mode min-h-screen">
+      <h1 className="text-2xl font-bold mb-6 reddit-title">Create New Canvas</h1>
       
       {error && (
-        <div className="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <div className="bg-reddit-red/20 border border-reddit-red text-reddit-red px-4 py-3 rounded mb-4">
           {error}
         </div>
       )}
       
-      <form onSubmit={handleSubmit} className="bg-white shadow-md rounded px-8 pt-6 pb-8 mb-4">
+      <form onSubmit={handleSubmit} className="reddit-card px-8 pt-6 pb-8 mb-4">
         <div className="mb-4">
-          <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="name">
+          <label className="block text-reddit-text text-sm font-bold mb-2" htmlFor="name">
             Canvas Name
           </label>
           <input 
@@ -83,7 +83,7 @@ const CreateCanvas = ({ user }) => {
             type="text" 
             value={name}
             onChange={(e) => setName(e.target.value)}
-            className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+            className="reddit-input w-full"
             placeholder="My Awesome Canvas"
             required
           />
@@ -91,7 +91,7 @@ const CreateCanvas = ({ user }) => {
         
         <div className="mb-4 grid grid-cols-2 gap-4">
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="width">
+            <label className="block text-reddit-text text-sm font-bold mb-2" htmlFor="width">
               Width (pixels)
             </label>
             <input 
@@ -99,7 +99,7 @@ const CreateCanvas = ({ user }) => {
               type="number" 
               value={width}
               onChange={(e) => setWidth(parseInt(e.target.value))}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="reddit-input w-full"
               min="10"
               max="1000"
               required
@@ -107,7 +107,7 @@ const CreateCanvas = ({ user }) => {
           </div>
           
           <div>
-            <label className="block text-gray-700 text-sm font-bold mb-2" htmlFor="height">
+            <label className="block text-reddit-text text-sm font-bold mb-2" htmlFor="height">
               Height (pixels)
             </label>
             <input 
@@ -115,7 +115,7 @@ const CreateCanvas = ({ user }) => {
               type="number" 
               value={height}
               onChange={(e) => setHeight(parseInt(e.target.value))}
-              className="shadow appearance-none border rounded w-full py-2 px-3 text-gray-700 leading-tight focus:outline-none focus:shadow-outline"
+              className="reddit-input w-full"
               min="10"
               max="1000"
               required
@@ -129,9 +129,9 @@ const CreateCanvas = ({ user }) => {
               type="checkbox"
               checked={isPublic}
               onChange={(e) => setIsPublic(e.target.checked)}
-              className="mr-2"
+              className="mr-2 accent-reddit-orange"
             />
-            <span className="text-gray-700 text-sm">Make this canvas public</span>
+            <span className="text-reddit-text text-sm">Make this canvas public</span>
           </label>
         </div>
         
@@ -139,22 +139,22 @@ const CreateCanvas = ({ user }) => {
           <button
             type="button"
             onClick={() => navigate('/')}
-            className="bg-gray-500 hover:bg-gray-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline"
+            className="reddit-btn-outline"
           >
             Cancel
           </button>
           <button
             type="submit"
             disabled={loading}
-            className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded focus:outline-none focus:shadow-outline disabled:opacity-50"
+            className="reddit-btn disabled:opacity-50"
           >
             {loading ? 'Creating...' : 'Create Canvas'}
           </button>
         </div>
       </form>
       
-      <div className="mt-4 text-sm text-gray-600">
-        <h3 className="font-bold">Tips:</h3>
+      <div className="mt-4 text-sm text-reddit-muted">
+        <h3 className="font-bold text-reddit-text">Tips:</h3>
         <ul className="list-disc list-inside mt-2">
           <li>Smaller canvases (e.g., 100×100) are easier to fill with active users</li>
           <li>Public canvases can be edited by any signed-in user</li>

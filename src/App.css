@@ -7,23 +7,23 @@
 }
 
 .color-picker {
-  @apply flex gap-2 flex-wrap max-w-[300px] my-5;
+  @apply flex gap-2 flex-wrap justify-center max-w-full my-4;
 }
 
 .color-option {
-  @apply w-6 h-6 rounded cursor-pointer border border-black/20;
+  @apply w-7 h-7 rounded-full cursor-pointer border border-reddit-border transition-transform duration-200;
 }
 
 .color-option.selected {
-  @apply border-2 border-black scale-110;
+  @apply border-2 border-reddit-orange scale-125 shadow-md;
 }
 
 .canvas-preview {
-  @apply w-[100px] h-[100px] border border-gray-300 mb-2.5;
+  @apply w-[100px] h-[100px] border border-reddit-border mb-2.5;
 }
 
 .canvas-card {
-  @apply p-4 rounded-lg bg-gray-100 transition-transform duration-200 ease-in-out;
+  @apply p-4 rounded-lg bg-reddit-highlight border border-reddit-border transition-transform duration-200 ease-in-out;
 }
 
 .canvas-card:hover {
@@ -31,5 +31,110 @@
 }
 
 .canvas-container {
-  @apply flex flex-col items-center my-5 overflow-auto;
+  @apply flex flex-col items-center overflow-auto;
+}
+
+.konvajs-content canvas {
+  @apply select-none touch-none;
+}
+
+/* Zoom controls */
+.zoom-controls {
+  @apply flex gap-1.5;
+}
+
+.zoom-controls button {
+  @apply flex items-center justify-center h-10 w-10 rounded-full bg-reddit-highlight hover:bg-reddit-border text-reddit-text font-bold transition-colors shadow-sm;
+}
+
+.mode-button {
+  @apply py-2 px-4 rounded-full font-bold transition-colors shadow-sm;
+}
+
+.pixel-info {
+  @apply fixed top-20 left-5 bg-reddit-highlight/90 backdrop-blur-sm p-2 rounded-lg shadow-lg z-10 text-xs text-reddit-text border border-reddit-border;
+}
+
+.controls-container {
+  @apply fixed bottom-6 left-1/2 transform -translate-x-1/2 bg-reddit-highlight/90 backdrop-blur-sm p-3 rounded-lg shadow-lg z-10 max-w-md w-11/12 border border-reddit-border;
+}
+
+@media (max-width: 640px) {
+  .controls-container {
+    @apply bottom-3 p-2;
+  }
+  
+  .color-option {
+    @apply w-6 h-6;
+  }
+  
+  .zoom-controls button {
+    @apply h-8 w-8;
+  }
+  
+  .pixel-info {
+    @apply hidden;
+  }
+}
+
+/* Canvas cursor styles */
+.draw-cursor {
+  cursor: crosshair;
+}
+
+.move-cursor {
+  cursor: grab;
+}
+
+.move-cursor:active {
+  cursor: grabbing;
+}
+
+/* Reddit theme */
+.reddit-navbar {
+  @apply bg-reddit-navbar text-reddit-text p-2 h-14 flex items-center shadow-md z-50;
+}
+
+.reddit-navbar a {
+  @apply text-reddit-text hover:text-white transition-colors;
+}
+
+.reddit-title {
+  @apply font-bold text-reddit-text;
+}
+
+.reddit-subtitle {
+  @apply text-reddit-muted text-sm;
+}
+
+.reddit-canvas-info {
+  @apply bg-reddit-highlight p-3 border-b border-reddit-border text-reddit-text;
+}
+
+.reddit-canvas-data {
+  @apply text-sm text-reddit-muted my-1;
+}
+
+.reddit-tooltip {
+  @apply fixed top-20 right-5 bg-reddit-highlight/90 backdrop-blur-sm p-2 rounded-lg shadow-lg z-10 text-xs text-reddit-text border border-reddit-border;
+}
+
+.reddit-cooldown {
+  @apply text-reddit-orange;
+}
+
+.reddit-ready {
+  @apply text-green-500;
+}
+
+.reddit-error {
+  @apply text-reddit-red;
+}
+
+.reddit-loading {
+  @apply flex justify-center items-center h-full text-reddit-muted;
+}
+
+.reddit-card {
+  @apply bg-reddit-highlight rounded-md border border-reddit-border p-4 shadow-sm;
 }

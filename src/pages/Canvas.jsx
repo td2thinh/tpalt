@@ -1,8 +1,9 @@
 import { useState, useEffect, useRef } from 'react'
-import { useParams, useNavigate } from 'react-router-dom'
+import { useParams, useNavigate, Link } from 'react-router-dom'
 import { doc, getDoc } from 'firebase/firestore'
 import { ref, onValue, update, serverTimestamp } from 'firebase/database'
 import { db, rtdb } from '../firebase/config'
+import { Stage, Layer, Rect } from 'react-konva'
 
 // Array of common colors for pixel art
 const COLORS = [
@@ -20,10 +21,19 @@ const Canvas = ({ user }) => {
   const [selectedColor, setSelectedColor] = useState('#000000')
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
-  const canvasRef = useRef(null)
   const [cooldown, setCooldown] = useState(0)
   const [lastPlaced, setLastPlaced] = useState(0)
-
+  
+  // State for zoom and pan
+  const [scale, setScale] = useState(4) // Default zoom level
+  const [position, setPosition] = useState({ x: 0, y: 0 })
+  const stageRef = useRef(null)
+  const containerRef = useRef(null)
+  const [isPinching, setIsPinching] = useState(false)
+  const [lastDistance, setLastDistance] = useState(0)
+  const [isDrawMode, setIsDrawMode] = useState(true)
+  const [cursorPos, setCursorPos] = useState({ x: -1, y: -1 })
+  
   useEffect(() => {
     const fetchCanvas = async () => {
       try {
@@ -62,35 +72,22 @@ const Canvas = ({ user }) => {
 
     fetchCanvas()
   }, [id, user])
-
-  // Update canvas when pixels change
+  
+  // Initialize stage position when canvas loads
   useEffect(() => {
-    if (!canvas || !canvasRef.current) return
+    if (!canvas || !containerRef.current) return
     
-    const ctx = canvasRef.current.getContext('2d')
-    const [width, height] = canvas.size
-    const pixelSize = Math.min(
-      (canvasRef.current.width / width),
-      (canvasRef.current.height / height)
-    )
+    // Center the canvas initially
+    const containerWidth = containerRef.current.offsetWidth
+    const containerHeight = containerRef.current.offsetHeight
+    const [canvasWidth, canvasHeight] = canvas.size
     
-    // Clear canvas
-    ctx.fillStyle = '#FFFFFF'
-    ctx.fillRect(0, 0, canvasRef.current.width, canvasRef.current.height)
-    
-    // Draw pixels
-    Object.entries(pixels).forEach(([position, color]) => {
-      const [x, y] = position.split(',').map(Number)
-      
-      ctx.fillStyle = color
-      ctx.fillRect(
-        x * pixelSize, 
-        y * pixelSize, 
-        pixelSize, 
-        pixelSize
-      )
+    // Calculate the center position
+    setPosition({
+      x: (containerWidth / 2) - (canvasWidth * scale / 2),
+      y: (containerHeight / 2) - (canvasHeight * scale / 2)
     })
-  }, [canvas, pixels])
+  }, [canvas, scale, containerRef.current])
 
   // Cooldown timer
   useEffect(() => {
@@ -103,26 +100,198 @@ const Canvas = ({ user }) => {
     return () => clearTimeout(timer)
   }, [cooldown])
 
-  const handleCanvasClick = (e) => {
-    if (!canvas || !user || cooldown > 0) return
+  // Handle window resize
+  useEffect(() => {
+    const handleResize = () => {
+      if (stageRef.current && containerRef.current) {
+        stageRef.current.width(containerRef.current.offsetWidth)
+        stageRef.current.height(containerRef.current.offsetHeight)
+        
+        // Recenter canvas on resize
+        if (canvas) {
+          const containerWidth = containerRef.current.offsetWidth
+          const containerHeight = containerRef.current.offsetHeight
+          const [canvasWidth, canvasHeight] = canvas.size
+          
+          setPosition({
+            x: (containerWidth / 2) - (canvasWidth * scale / 2),
+            y: (containerHeight / 2) - (canvasHeight * scale / 2)
+          })
+        }
+      }
+    }
+
+    window.addEventListener('resize', handleResize)
+    return () => window.removeEventListener('resize', handleResize)
+  }, [canvas, scale])
+
+  const handleZoomIn = () => {
+    setScale(prev => Math.min(prev * 1.5, 40))
+  }
+
+  const handleZoomOut = () => {
+    setScale(prev => Math.max(prev / 1.5, 1))
+  }
+
+  const handleResetZoom = () => {
+    setScale(4)
+    if (canvas && containerRef.current) {
+      const containerWidth = containerRef.current.offsetWidth
+      const containerHeight = containerRef.current.offsetHeight
+      const [canvasWidth, canvasHeight] = canvas.size
+      
+      setPosition({
+        x: (containerWidth / 2) - (canvasWidth * 4 / 2),
+        y: (containerHeight / 2) - (canvasHeight * 4 / 2)
+      })
+    }
+  }
+
+  const handleWheel = (e) => {
+    e.evt.preventDefault()
     
-    const rect = canvasRef.current.getBoundingClientRect()
-    const [width, height] = canvas.size
+    const scaleBy = 1.1
+    const stage = stageRef.current
+    const pointer = stage.getPointerPosition()
     
-    const pixelSize = Math.min(
-      (canvasRef.current.width / width),
-      (canvasRef.current.height / height)
-    )
+    if (!pointer) return
     
-    const x = Math.floor((e.clientX - rect.left) / pixelSize)
-    const y = Math.floor((e.clientY - rect.top) / pixelSize)
+    const mousePointTo = {
+      x: (pointer.x - stage.x()) / stage.scaleX(),
+      y: (pointer.y - stage.y()) / stage.scaleY()
+    }
+    
+    // Zoom direction
+    const direction = e.evt.deltaY < 0 ? 1 : -1
+    
+    const newScale = direction > 0 
+      ? Math.min(scale * scaleBy, 40) 
+      : Math.max(scale / scaleBy, 1)
+    
+    setScale(newScale)
+    
+    // Calculate new position
+    const newPos = {
+      x: pointer.x - mousePointTo.x * newScale,
+      y: pointer.y - mousePointTo.y * newScale
+    }
+    
+    setPosition(newPos)
+  }
+
+  const handleDragEnd = (e) => {
+    setPosition({
+      x: e.target.x(),
+      y: e.target.y()
+    })
+  }
+
+  const toggleDrawMode = () => {
+    setIsDrawMode(prev => !prev)
+  }
+
+  // Track cursor position for pixel coordinates display
+  const handleMouseMove = (e) => {
+    if (!canvas || !stageRef.current) return
+    
+    const stage = stageRef.current
+    const point = stage.getPointerPosition()
+    
+    if (!point) return
+    
+    // Convert from screen coordinates to canvas coordinates
+    const x = Math.floor((point.x - stage.x()) / scale)
+    const y = Math.floor((point.y - stage.y()) / scale)
     
     // Check bounds
-    if (x < 0 || x >= width || y < 0 || y >= height) return
+    if (x >= 0 && x < canvas.size[0] && y >= 0 && y < canvas.size[1]) {
+      setCursorPos({ x, y })
+    } else {
+      setCursorPos({ x: -1, y: -1 })
+    }
+  }
+
+  // Touch events for pinch zoom
+  const handleTouchMove = (e) => {
+    const evt = e.evt
+    
+    // Detect pinch gesture
+    if (evt.touches.length === 2) {
+      evt.preventDefault()
+      setIsPinching(true)
+      
+      const touch1 = evt.touches[0]
+      const touch2 = evt.touches[1]
+      
+      const distance = Math.sqrt(
+        Math.pow(touch1.clientX - touch2.clientX, 2) +
+        Math.pow(touch1.clientY - touch2.clientY, 2)
+      )
+      
+      if (lastDistance === 0) {
+        setLastDistance(distance)
+        return
+      }
+      
+      const stage = stageRef.current
+      
+      // Calculate center point of the two touches
+      const center = {
+        x: (touch1.clientX + touch2.clientX) / 2,
+        y: (touch1.clientY + touch2.clientY) / 2
+      }
+      
+      const stagePoint = {
+        x: center.x - stage.container().offsetLeft,
+        y: center.y - stage.container().offsetTop
+      }
+      
+      const mousePointTo = {
+        x: (stagePoint.x - stage.x()) / stage.scaleX(),
+        y: (stagePoint.y - stage.y()) / stage.scaleY()
+      }
+      
+      // Determine scale direction
+      const scaleBy = 1.01
+      const newScale = distance > lastDistance 
+        ? Math.min(scale * scaleBy, 40) 
+        : Math.max(scale / scaleBy, 1)
+      
+      setScale(newScale)
+      
+      // Calculate new position
+      const newPos = {
+        x: stagePoint.x - mousePointTo.x * newScale,
+        y: stagePoint.y - mousePointTo.y * newScale
+      }
+      
+      setPosition(newPos)
+      setLastDistance(distance)
+    }
+  }
+
+  const handleTouchEnd = () => {
+    setIsPinching(false)
+    setLastDistance(0)
+  }
+
+  const handleCanvasClick = (e) => {
+    if (!canvas || !user || cooldown > 0 || !isDrawMode) return
+    
+    const stage = stageRef.current
+    const point = stage.getPointerPosition()
+    
+    if (!point) return
+    
+    // Convert from screen coordinates to canvas coordinates
+    const x = Math.floor((point.x - stage.x()) / scale)
+    const y = Math.floor((point.y - stage.y()) / scale)
+    
+    // Check bounds
+    if (x < 0 || x >= canvas.size[0] || y < 0 || y >= canvas.size[1]) return
     
     // Update pixel in Firebase
     const position = `${x},${y}`
-    const pixelRef = ref(rtdb, `canvases/${id}/pixels/${position}`)
     
     update(ref(rtdb, `canvases/${id}`), {
       [`pixels/${position}`]: selectedColor,
@@ -135,16 +304,16 @@ const Canvas = ({ user }) => {
   }
   
   if (loading) {
-    return <div className="text-center mt-8">Loading canvas...</div>
+    return <div className="reddit-loading h-screen">Loading canvas...</div>
   }
   
   if (error) {
     return (
-      <div className="text-center mt-8">
-        <p className="text-red-500">{error}</p>
+      <div className="reddit-loading h-screen flex flex-col">
+        <p className="reddit-error mb-3">{error}</p>
         <button 
           onClick={() => navigate('/')}
-          className="mt-4 bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded"
+          className="reddit-btn"
         >
           Back to Home
         </button>
@@ -153,61 +322,181 @@ const Canvas = ({ user }) => {
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-4">{canvas.name}</h1>
-      
-      <div className="flex flex-col items-center mb-4">
-        <p className="text-sm text-gray-600 mb-2">
-          {canvas.size[0]} × {canvas.size[1]} pixels
-        </p>
+    <div className="canvas-page dark-mode">
+      <div className="reddit-canvas-info">
+        <h1 className="reddit-title text-xl">{canvas.name}</h1>
         
-        {user ? (
-          cooldown > 0 ? (
-            <p className="mb-2 text-yellow-600">
-              Cooldown: {cooldown}s before you can place another pixel
-            </p>
-          ) : (
-            <p className="mb-2 text-green-600">
-              You can place a pixel now!
-            </p>
-          )
-        ) : (
-          <p className="mb-2 text-gray-500">
-            <a href="/login" className="text-blue-500 hover:underline">Login</a> to place pixels
+        <div className="reddit-canvas-data">
+          <p>
+            {canvas.size[0]} × {canvas.size[1]} pixels
           </p>
-        )}
+          
+          {user ? (
+            cooldown > 0 ? (
+              <p className="reddit-cooldown">
+                Cooldown: {cooldown}s before you can place another pixel
+              </p>
+            ) : (
+              <p className="reddit-ready">
+                You can place a pixel now!
+              </p>
+            )
+          ) : (
+            <p className="text-reddit-muted">
+              <Link to="/login" className="text-reddit-blue hover:underline">Login</Link> to place pixels
+            </p>
+          )}
+        </div>
       </div>
       
-      <div className="canvas-container">
-        <canvas
-          ref={canvasRef}
-          width={Math.min(800, canvas.size[0])}
-          height={Math.min(800, canvas.size[1])}
+      <div 
+        ref={containerRef}
+        className={`canvas-area ${isDrawMode ? 'draw-cursor' : 'move-cursor'}`}
+        style={{ touchAction: 'none' }}
+      >
+        <Stage
+          ref={stageRef}
+          width={containerRef.current?.offsetWidth || window.innerWidth}
+          height={containerRef.current?.offsetHeight || window.innerHeight - 90}
+          onWheel={handleWheel}
+          onTap={handleCanvasClick}
           onClick={handleCanvasClick}
-          className="border border-gray-300 cursor-pointer"
-        />
-      </div>
-      
-      {user && (
-        <div className="mt-4">
-          <h3 className="font-bold mb-2">Select a color:</h3>
-          <div className="color-picker">
-            {COLORS.map((color) => (
-              <div
-                key={color}
-                className={`color-option ${color === selectedColor ? 'selected' : ''}`}
-                style={{ backgroundColor: color }}
-                onClick={() => setSelectedColor(color)}
-                title={color}
+          draggable={!isDrawMode || !user}
+          onDragEnd={handleDragEnd}
+          x={position.x}
+          y={position.y}
+          scale={{ x: scale, y: scale }}
+          onTouchMove={handleTouchMove}
+          onTouchEnd={handleTouchEnd}
+          onMouseMove={handleMouseMove}
+        >
+          <Layer>
+            {/* Canvas background */}
+            <Rect
+              x={0}
+              y={0}
+              width={canvas.size[0]}
+              height={canvas.size[1]}
+              fill="#FFFFFF"
+              stroke="#343536"
+              strokeWidth={0.5 / scale}
+            />
+            
+            {/* Grid lines for better visibility at higher zoom levels */}
+            {scale > 8 && Array.from({ length: canvas.size[0] + 1 }).map((_, i) => (
+              <Rect
+                key={`vl-${i}`}
+                x={i}
+                y={0}
+                width={0.02}
+                height={canvas.size[1]}
+                fill="#2a2a2b"
               />
             ))}
-          </div>
+            
+            {scale > 8 && Array.from({ length: canvas.size[1] + 1 }).map((_, i) => (
+              <Rect
+                key={`hl-${i}`}
+                x={0}
+                y={i}
+                width={canvas.size[0]}
+                height={0.02}
+                fill="#2a2a2b"
+              />
+            ))}
+            
+            {/* Draw pixels */}
+            {Object.entries(pixels).map(([position, color]) => {
+              const [x, y] = position.split(',').map(Number)
+              return (
+                <Rect
+                  key={position}
+                  x={x}
+                  y={y}
+                  width={1}
+                  height={1}
+                  fill={color}
+                />
+              )
+            })}
+          </Layer>
+        </Stage>
+      </div>
+      
+      {/* Pixel coordinates display */}
+      {cursorPos.x >= 0 && (
+        <div className="pixel-info">
+          <p>X: {cursorPos.x}, Y: {cursorPos.y}</p>
+          <p>Zoom: {Math.round(scale * 100) / 100}x</p>
+          <p>{isDrawMode ? "Draw Mode" : "Move Mode"}</p>
         </div>
       )}
       
-      <div className="mt-4 text-sm text-gray-500">
-        <p>Click on the canvas to place a pixel of the selected color.</p>
-        <p>You can place one pixel every 5 seconds.</p>
+      {/* Floating controls */}
+      <div className="controls-container">
+        {user && (
+          <div className="mb-3">
+            <h3 className="font-bold mb-2 text-center text-reddit-text">Select a color:</h3>
+            <div className="color-picker">
+              {COLORS.map((color) => (
+                <div
+                  key={color}
+                  className={`color-option ${color === selectedColor ? 'selected' : ''}`}
+                  style={{ backgroundColor: color }}
+                  onClick={() => setSelectedColor(color)}
+                  title={color}
+                />
+              ))}
+            </div>
+          </div>
+        )}
+        
+        <div className="flex justify-between items-center">
+          <div className="zoom-controls">
+            <button 
+              onClick={handleZoomOut}
+              title="Zoom Out"
+              aria-label="Zoom Out"
+            >
+              −
+            </button>
+            <button 
+              onClick={handleResetZoom}
+              title="Reset Zoom"
+              aria-label="Reset Zoom"
+            >
+              ⟲
+            </button>
+            <button 
+              onClick={handleZoomIn}
+              title="Zoom In"
+              aria-label="Zoom In"
+            >
+              +
+            </button>
+          </div>
+          
+          {user && (
+            <button
+              onClick={toggleDrawMode}
+              className={`mode-button ${
+                isDrawMode 
+                  ? 'bg-reddit-orange hover:bg-reddit-orangeHover text-white' 
+                  : 'bg-reddit-blue hover:bg-reddit-blueHover text-white'
+              }`}
+              title={isDrawMode ? "Switch to Move Mode" : "Switch to Draw Mode"}
+            >
+              {isDrawMode ? "Draw Mode" : "Move Mode"}
+            </button>
+          )}
+        </div>
+      </div>
+      
+      {/* Instructions tooltip - hidden on mobile */}
+      <div className="reddit-tooltip hidden sm:block">
+        <p>Click to place a pixel</p>
+        <p>Use the mode button to toggle between draw/move</p>
+        <p>Pinch or scroll to zoom</p>
       </div>
     </div>
   )

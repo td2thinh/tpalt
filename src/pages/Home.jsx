@@ -58,28 +58,28 @@ const Home = ({ user }) => {
   }, [user])
 
   if (loading) {
-    return <div className="text-center mt-8">Loading canvases...</div>
+    return <div className="reddit-loading h-screen">Loading canvases...</div>
   }
 
   return (
-    <div className="container mx-auto p-4">
-      <h1 className="text-2xl font-bold mb-6">Available Canvases</h1>
+    <div className="container mx-auto p-4 dark-mode min-h-screen">
+      <h1 className="text-2xl font-bold mb-6 reddit-title">Available Canvases</h1>
       
       {user && (
         <Link
           to="/create"
-          className="bg-blue-600 hover:bg-blue-700 text-white py-2 px-4 rounded mb-6 inline-block"
+          className="reddit-btn mb-6 inline-block"
         >
           Create New Canvas
         </Link>
       )}
       
       {canvases.length === 0 ? (
-        <div className="text-center mt-8">
+        <div className="text-center mt-8 text-reddit-text">
           <p>No canvases available.</p>
           {!user && (
             <p className="mt-2">
-              <Link to="/login" className="text-blue-500 hover:underline">
+              <Link to="/login" className="text-reddit-blue hover:underline">
                 Login
               </Link> to create your own canvas!
             </p>
@@ -90,18 +90,18 @@ const Home = ({ user }) => {
           {canvases.map((canvas) => (
             <Link to={`/canvas/${canvas.id}`} key={canvas.id}>
               <div className="canvas-card">
-                <h2 className="text-lg font-bold mb-2">{canvas.name}</h2>
-                <p className="text-sm text-gray-600 mb-2">
+                <h2 className="text-lg font-bold mb-2 reddit-title">{canvas.name}</h2>
+                <p className="text-sm text-reddit-muted mb-2">
                   {canvas.size[0]} × {canvas.size[1]}
                 </p>
                 <CanvasPreview canvasId={canvas.id} size={canvas.size} />
                 <div className="mt-2 flex justify-between items-center">
                   <span className={`px-2 py-1 rounded text-xs ${
-                    canvas.public ? 'bg-green-200 text-green-800' : 'bg-yellow-200 text-yellow-800'
+                    canvas.public ? 'bg-reddit-blue/20 text-reddit-blue' : 'bg-reddit-orange/20 text-reddit-orange'
                   }`}>
                     {canvas.public ? 'Public' : 'Private'}
                   </span>
-                  <span className="text-xs text-gray-500">
+                  <span className="text-xs text-reddit-muted">
                     Created {new Date(canvas.createdAt).toLocaleDateString()}
                   </span>
                 </div>

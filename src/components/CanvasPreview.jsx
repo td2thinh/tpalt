@@ -17,6 +17,11 @@ const CanvasPreview = ({ canvasId, size }) => {
     ctx.fillStyle = '#FFFFFF'
     ctx.fillRect(0, 0, canvas.width, canvas.height)
 
+    // Add border
+    ctx.strokeStyle = '#343536'
+    ctx.lineWidth = 1
+    ctx.strokeRect(0, 0, canvas.width, canvas.height)
+
     // Listen for pixel data
     const pixelsRef = ref(rtdb, `canvases/${canvasId}/pixels`)
     
@@ -44,7 +49,11 @@ const CanvasPreview = ({ canvasId, size }) => {
 
   return (
     <div className="relative w-[100px] h-[100px]">
-      {!loaded && <div className="absolute inset-0 flex items-center justify-center">Loading...</div>}
+      {!loaded && (
+        <div className="absolute inset-0 flex items-center justify-center bg-reddit-highlight text-reddit-muted text-xs">
+          Loading...
+        </div>
+      )}
       <canvas 
         ref={canvasRef} 
         width={100}

@@ -1,29 +1,65 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500;600;700&display=swap');
+
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
-  line-height: 1.5;
-  font-weight: 400;
+  --toastify-color-success: theme('colors.reddit.orange');
+  --toastify-color-error: theme('colors.reddit.red');
+}
 
-  color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
-
-  font-synthesis: none;
-  text-rendering: optimizeLegibility;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
+html, body {
+  @apply h-full w-full m-0 p-0 overflow-hidden;
 }
 
 body {
+  @apply font-reddit bg-reddit-gray text-reddit-darkgray;
   margin: 0;
   min-width: 320px;
   min-height: 100vh;
 }
 
+#root {
+  @apply h-full w-full flex flex-col;
+}
+
+.canvas-page {
+  @apply flex flex-col h-screen max-h-screen overflow-hidden;
+}
+
+.canvas-area {
+  @apply flex-grow relative overflow-hidden bg-reddit-canvas;
+}
 
 .loading {
   @apply flex justify-center items-center h-screen text-2xl;
+}
+
+.reddit-btn {
+  @apply bg-reddit-orange hover:bg-reddit-orangeHover text-white font-medium py-2 px-4 rounded transition-colors;
+}
+
+.reddit-btn-secondary {
+  @apply bg-reddit-blue hover:bg-reddit-blueHover text-white font-medium py-2 px-4 rounded transition-colors;
+}
+
+.reddit-btn-outline {
+  @apply border border-reddit-border hover:border-reddit-text text-reddit-text bg-transparent py-2 px-4 rounded transition-colors;
+}
+
+.reddit-input {
+  @apply bg-reddit-input border border-reddit-border text-reddit-text rounded p-2 focus:border-reddit-blue focus:ring-0 outline-none;
+}
+
+.dark-mode {
+  @apply bg-reddit-darkgray text-reddit-text;
+}
+
+.dark-mode .reddit-card {
+  @apply bg-reddit-highlight border-reddit-border;
+}
+
+.header-cap {
+  height: 56px;
 }

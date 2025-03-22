@@ -23,13 +23,13 @@ function App() {
   }, [])
 
   if (loading) {
-    return <div className="loading">Loading...</div>
+    return <div className="reddit-loading h-screen">Loading...</div>
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 dark:bg-gray-900">
+    <div className="h-screen max-h-screen overflow-hidden dark-mode">
       <Navbar user={user} />
-      <main className="container mx-auto px-4 py-8">
+      <main className="h-[calc(100vh-56px)]">
         <Routes>
           <Route path="/" element={<Home user={user} />} />
           <Route path="/canvas/:id" element={<Canvas user={user} />} />
