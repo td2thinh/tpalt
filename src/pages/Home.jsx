@@ -102,7 +102,8 @@ const Home = ({ user }) => {
                     {canvas.public ? 'Public' : 'Private'}
                   </span>
                   <span className="text-xs text-reddit-muted">
-                    Created {new Date(canvas.createdAt).toLocaleDateString()}
+                    Created {canvas.createdAt?.toDate ? new Date(canvas.createdAt.toDate()).toLocaleDateString() : 'Recently'}
+                    {canvas.creatorName && ` by ${canvas.creatorName}`}
                   </span>
                 </div>
               </div>

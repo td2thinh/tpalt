@@ -395,6 +395,11 @@ const Canvas = ({ user }) => {
           <div className="reddit-canvas-data text-center">
             <p>
               {canvas.size[0]} × {canvas.size[1]} pixels
+              {canvas.creatorName && <span className="text-xs text-reddit-muted ml-2">by {canvas.creatorName}</span>}
+            </p>
+            
+            <p className="text-xs text-reddit-muted">
+              Created {canvas.createdAt?.toDate ? new Date(canvas.createdAt.toDate()).toLocaleDateString() : 'Recently'}
             </p>
 
             {user ? (

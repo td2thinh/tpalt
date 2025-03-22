@@ -44,6 +44,7 @@ const CreateCanvas = ({ user }) => {
         size: [width, height],
         public: isPublic,
         createdBy: user.uid,
+        creatorName: user.displayName || 'Anonymous User',
         createdAt: serverTimestamp(),
       })
       
