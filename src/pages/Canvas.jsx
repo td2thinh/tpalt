@@ -7,7 +7,7 @@ import { Stage, Layer, Rect } from 'react-konva'
 
 // Array of common colors for pixel art
 const COLORS = [
-  '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF', 
+  '#000000', '#FFFFFF', '#FF0000', '#00FF00', '#0000FF',
   '#FFFF00', '#FF00FF', '#00FFFF', '#FFA500', '#800080',
   '#008000', '#800000', '#008080', '#808000', '#FFC0CB',
   '#A52A2A', '#808080', '#C0C0C0', '#ADD8E6', '#98FB98'
@@ -23,7 +23,7 @@ const Canvas = ({ user }) => {
   const [error, setError] = useState(null)
   const [cooldown, setCooldown] = useState(0)
   const [lastPlaced, setLastPlaced] = useState(0)
-  
+
   // State for zoom and pan
   const [scale, setScale] = useState(4) // Default zoom level
   const [position, setPosition] = useState({ x: 0, y: 0 })
@@ -33,36 +33,36 @@ const Canvas = ({ user }) => {
   const [lastDistance, setLastDistance] = useState(0)
   const [isDrawMode, setIsDrawMode] = useState(true)
   const [cursorPos, setCursorPos] = useState({ x: -1, y: -1 })
-  
+
   useEffect(() => {
     const fetchCanvas = async () => {
       try {
         // Get canvas metadata from Firestore
         const canvasDoc = await getDoc(doc(db, 'canvases', id))
-        
+
         if (!canvasDoc.exists()) {
           setError('Canvas not found')
           return
         }
-        
+
         const canvasData = { id: canvasDoc.id, ...canvasDoc.data() }
         setCanvas(canvasData)
-        
+
         // Check if this is a private canvas and if user has access
         if (!canvasData.public && (!user || user.uid !== canvasData.createdBy)) {
           setError('You do not have permission to view this canvas')
           return
         }
-        
+
         // Get pixel data from Realtime Database
         const pixelsRef = ref(rtdb, `canvases/${id}/pixels`)
-        
+
         onValue(pixelsRef, (snapshot) => {
           const pixelData = snapshot.val() || {}
           setPixels(pixelData)
           setLoading(false)
         })
-        
+
       } catch (err) {
         console.error('Error fetching canvas:', err)
         setError('Failed to load canvas')
@@ -72,16 +72,16 @@ const Canvas = ({ user }) => {
 
     fetchCanvas()
   }, [id, user])
-  
+
   // Initialize stage position when canvas loads
   useEffect(() => {
     if (!canvas || !containerRef.current) return
-    
+
     // Center the canvas initially
     const containerWidth = containerRef.current.offsetWidth
     const containerHeight = containerRef.current.offsetHeight
     const [canvasWidth, canvasHeight] = canvas.size
-    
+
     // Calculate the center position
     setPosition({
       x: (containerWidth / 2) - (canvasWidth * scale / 2),
@@ -92,11 +92,11 @@ const Canvas = ({ user }) => {
   // Cooldown timer
   useEffect(() => {
     if (cooldown <= 0) return
-    
+
     const timer = setTimeout(() => {
       setCooldown((prev) => Math.max(0, prev - 1))
     }, 1000)
-    
+
     return () => clearTimeout(timer)
   }, [cooldown])
 
@@ -106,13 +106,13 @@ const Canvas = ({ user }) => {
       if (stageRef.current && containerRef.current) {
         stageRef.current.width(containerRef.current.offsetWidth)
         stageRef.current.height(containerRef.current.offsetHeight)
-        
+
         // Recenter canvas on resize
         if (canvas) {
           const containerWidth = containerRef.current.offsetWidth
           const containerHeight = containerRef.current.offsetHeight
           const [canvasWidth, canvasHeight] = canvas.size
-          
+
           setPosition({
             x: (containerWidth / 2) - (canvasWidth * scale / 2),
             y: (containerHeight / 2) - (canvasHeight * scale / 2)
@@ -139,7 +139,7 @@ const Canvas = ({ user }) => {
       const containerWidth = containerRef.current.offsetWidth
       const containerHeight = containerRef.current.offsetHeight
       const [canvasWidth, canvasHeight] = canvas.size
-      
+
       setPosition({
         x: (containerWidth / 2) - (canvasWidth * 4 / 2),
         y: (containerHeight / 2) - (canvasHeight * 4 / 2)
@@ -149,33 +149,33 @@ const Canvas = ({ user }) => {
 
   const handleWheel = (e) => {
     e.evt.preventDefault()
-    
+
     const scaleBy = 1.1
     const stage = stageRef.current
     const pointer = stage.getPointerPosition()
-    
+
     if (!pointer) return
-    
+
     const mousePointTo = {
       x: (pointer.x - stage.x()) / stage.scaleX(),
       y: (pointer.y - stage.y()) / stage.scaleY()
     }
-    
+
     // Zoom direction
     const direction = e.evt.deltaY < 0 ? 1 : -1
-    
-    const newScale = direction > 0 
-      ? Math.min(scale * scaleBy, 40) 
+
+    const newScale = direction > 0
+      ? Math.min(scale * scaleBy, 40)
       : Math.max(scale / scaleBy, 1)
-    
+
     setScale(newScale)
-    
+
     // Calculate new position
     const newPos = {
       x: pointer.x - mousePointTo.x * newScale,
       y: pointer.y - mousePointTo.y * newScale
     }
-    
+
     setPosition(newPos)
   }
 
@@ -193,16 +193,16 @@ const Canvas = ({ user }) => {
   // Track cursor position for pixel coordinates display
   const handleMouseMove = (e) => {
     if (!canvas || !stageRef.current) return
-    
+
     const stage = stageRef.current
     const point = stage.getPointerPosition()
-    
+
     if (!point) return
-    
+
     // Convert from screen coordinates to canvas coordinates
     const x = Math.floor((point.x - stage.x()) / scale)
     const y = Math.floor((point.y - stage.y()) / scale)
-    
+
     // Check bounds
     if (x >= 0 && x < canvas.size[0] && y >= 0 && y < canvas.size[1]) {
       setCursorPos({ x, y })
@@ -214,57 +214,57 @@ const Canvas = ({ user }) => {
   // Touch events for pinch zoom
   const handleTouchMove = (e) => {
     const evt = e.evt
-    
+
     // Detect pinch gesture
     if (evt.touches.length === 2) {
       evt.preventDefault()
       setIsPinching(true)
-      
+
       const touch1 = evt.touches[0]
       const touch2 = evt.touches[1]
-      
+
       const distance = Math.sqrt(
         Math.pow(touch1.clientX - touch2.clientX, 2) +
         Math.pow(touch1.clientY - touch2.clientY, 2)
       )
-      
+
       if (lastDistance === 0) {
         setLastDistance(distance)
         return
       }
-      
+
       const stage = stageRef.current
-      
+
       // Calculate center point of the two touches
       const center = {
         x: (touch1.clientX + touch2.clientX) / 2,
         y: (touch1.clientY + touch2.clientY) / 2
       }
-      
+
       const stagePoint = {
         x: center.x - stage.container().offsetLeft,
         y: center.y - stage.container().offsetTop
       }
-      
+
       const mousePointTo = {
         x: (stagePoint.x - stage.x()) / stage.scaleX(),
         y: (stagePoint.y - stage.y()) / stage.scaleY()
       }
-      
+
       // Determine scale direction
       const scaleBy = 1.01
-      const newScale = distance > lastDistance 
-        ? Math.min(scale * scaleBy, 40) 
+      const newScale = distance > lastDistance
+        ? Math.min(scale * scaleBy, 40)
         : Math.max(scale / scaleBy, 1)
-      
+
       setScale(newScale)
-      
+
       // Calculate new position
       const newPos = {
         x: stagePoint.x - mousePointTo.x * newScale,
         y: stagePoint.y - mousePointTo.y * newScale
       }
-      
+
       setPosition(newPos)
       setLastDistance(distance)
     }
@@ -277,41 +277,41 @@ const Canvas = ({ user }) => {
 
   const handleCanvasClick = (e) => {
     if (!canvas || !user || cooldown > 0 || !isDrawMode) return
-    
+
     const stage = stageRef.current
     const point = stage.getPointerPosition()
-    
+
     if (!point) return
-    
+
     // Convert from screen coordinates to canvas coordinates
     const x = Math.floor((point.x - stage.x()) / scale)
     const y = Math.floor((point.y - stage.y()) / scale)
-    
+
     // Check bounds
     if (x < 0 || x >= canvas.size[0] || y < 0 || y >= canvas.size[1]) return
-    
+
     // Update pixel in Firebase
     const position = `${x},${y}`
-    
+
     update(ref(rtdb, `canvases/${id}`), {
       [`pixels/${position}`]: selectedColor,
       updatedAt: serverTimestamp()
     })
-    
+
     // Set cooldown (5 seconds)
     setCooldown(5)
     setLastPlaced(Date.now())
   }
-  
+
   if (loading) {
     return <div className="reddit-loading h-screen">Loading canvas...</div>
   }
-  
+
   if (error) {
     return (
       <div className="reddit-loading h-screen flex flex-col">
         <p className="reddit-error mb-3">{error}</p>
-        <button 
+        <button
           onClick={() => navigate('/')}
           className="reddit-btn"
         >
@@ -323,37 +323,49 @@ const Canvas = ({ user }) => {
 
   return (
     <div className="canvas-page dark-mode">
-      <div className="reddit-canvas-info">
-        <h1 className="reddit-title text-xl">{canvas.name}</h1>
-        
-        <div className="reddit-canvas-data">
-          <p>
-            {canvas.size[0]} × {canvas.size[1]} pixels
-          </p>
-          
-          {user ? (
-            cooldown > 0 ? (
-              <p className="reddit-cooldown">
-                Cooldown: {cooldown}s before you can place another pixel
-              </p>
-            ) : (
-              <p className="reddit-ready">
-                You can place a pixel now!
-              </p>
-            )
-          ) : (
-            <p className="text-reddit-muted">
-              <Link to="/login" className="text-reddit-blue hover:underline">Login</Link> to place pixels
-            </p>
-          )}
-        </div>
-      </div>
-      
-      <div 
+      <div
         ref={containerRef}
         className={`canvas-area ${isDrawMode ? 'draw-cursor' : 'move-cursor'}`}
         style={{ touchAction: 'none' }}
       >
+        {/* Centered Canvas Info */}
+        <div className="reddit-canvas-info absolute top-4 left-1/2 transform -translate-x-1/2 z-10 bg-reddit-bg bg-opacity-80 p-2 rounded shadow-md">
+          <div className="flex items-center justify-between mb-1">
+            <h1 className="reddit-title text-xl">{canvas.name}</h1>
+            
+            {/* Info icon */}
+            <div className="info-icon bg-reddit-blue text-white rounded-full w-6 h-6 flex items-center justify-center cursor-help relative group ml-2">
+              <span className="text-sm font-bold">i</span>
+              <div className="reddit-tooltip hidden group-hover:block absolute right-0 mt-2 top-full bg-reddit-bg bg-opacity-90 p-2 rounded shadow-lg w-64 z-20">
+                <p>Click to place a pixel</p>
+                <p>Use the mode button to toggle between draw/move</p>
+                <p>Pinch or scroll to zoom</p>
+              </div>
+            </div>
+          </div>
+
+          <div className="reddit-canvas-data text-center">
+            <p>
+              {canvas.size[0]} × {canvas.size[1]} pixels
+            </p>
+
+            {user ? (
+              cooldown > 0 ? (
+                <p className="reddit-cooldown">
+                  Cooldown: {cooldown}s before you can place another pixel
+                </p>
+              ) : (
+                <p className="reddit-ready">
+                  You can place a pixel now!
+                </p>
+              )
+            ) : (
+              <p className="text-reddit-muted">
+                <Link to="/login" className="text-reddit-blue hover:underline">Login</Link> to place pixels
+              </p>
+            )}
+          </div>
+        </div>
         <Stage
           ref={stageRef}
           width={containerRef.current?.offsetWidth || window.innerWidth}
@@ -381,7 +393,7 @@ const Canvas = ({ user }) => {
               stroke="#343536"
               strokeWidth={0.5 / scale}
             />
-            
+
             {/* Grid lines for better visibility at higher zoom levels */}
             {scale > 8 && Array.from({ length: canvas.size[0] + 1 }).map((_, i) => (
               <Rect
@@ -393,7 +405,7 @@ const Canvas = ({ user }) => {
                 fill="#2a2a2b"
               />
             ))}
-            
+
             {scale > 8 && Array.from({ length: canvas.size[1] + 1 }).map((_, i) => (
               <Rect
                 key={`hl-${i}`}
@@ -404,7 +416,7 @@ const Canvas = ({ user }) => {
                 fill="#2a2a2b"
               />
             ))}
-            
+
             {/* Draw pixels */}
             {Object.entries(pixels).map(([position, color]) => {
               const [x, y] = position.split(',').map(Number)
@@ -422,16 +434,16 @@ const Canvas = ({ user }) => {
           </Layer>
         </Stage>
       </div>
-      
+
       {/* Pixel coordinates display */}
-      {cursorPos.x >= 0 && (
+      {/* {cursorPos.x >= 0 && (
         <div className="pixel-info">
           <p>X: {cursorPos.x}, Y: {cursorPos.y}</p>
           <p>Zoom: {Math.round(scale * 100) / 100}x</p>
           <p>{isDrawMode ? "Draw Mode" : "Move Mode"}</p>
         </div>
-      )}
-      
+      )} */}
+
       {/* Floating controls */}
       <div className="controls-container">
         {user && (
@@ -450,24 +462,24 @@ const Canvas = ({ user }) => {
             </div>
           </div>
         )}
-        
+
         <div className="flex justify-between items-center">
           <div className="zoom-controls">
-            <button 
+            <button
               onClick={handleZoomOut}
               title="Zoom Out"
               aria-label="Zoom Out"
             >
               −
             </button>
-            <button 
+            <button
               onClick={handleResetZoom}
               title="Reset Zoom"
               aria-label="Reset Zoom"
             >
               ⟲
             </button>
-            <button 
+            <button
               onClick={handleZoomIn}
               title="Zoom In"
               aria-label="Zoom In"
@@ -475,15 +487,14 @@ const Canvas = ({ user }) => {
               +
             </button>
           </div>
-          
+
           {user && (
             <button
               onClick={toggleDrawMode}
-              className={`mode-button ${
-                isDrawMode 
-                  ? 'bg-reddit-orange hover:bg-reddit-orangeHover text-white' 
-                  : 'bg-reddit-blue hover:bg-reddit-blueHover text-white'
-              }`}
+              className={`mode-button ${isDrawMode
+                ? 'bg-reddit-orange hover:bg-reddit-orangeHover text-white'
+                : 'bg-reddit-blue hover:bg-reddit-blueHover text-white'
+                }`}
               title={isDrawMode ? "Switch to Move Mode" : "Switch to Draw Mode"}
             >
               {isDrawMode ? "Draw Mode" : "Move Mode"}
@@ -491,13 +502,7 @@ const Canvas = ({ user }) => {
           )}
         </div>
       </div>
-      
-      {/* Instructions tooltip - hidden on mobile */}
-      <div className="reddit-tooltip hidden sm:block">
-        <p>Click to place a pixel</p>
-        <p>Use the mode button to toggle between draw/move</p>
-        <p>Pinch or scroll to zoom</p>
-      </div>
+
     </div>
   )
 }
