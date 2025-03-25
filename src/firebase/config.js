@@ -4,13 +4,13 @@ import { getFirestore } from 'firebase/firestore'
 import { getDatabase } from 'firebase/database'
 
 const firebaseConfig = {
-  apiKey: "AIzaSyDf4XaY5tRthfcIy5ssjcAKlCYgB7ZkMjU",
-  authDomain: "goplace-f33c9.firebaseapp.com",
-  databaseURL: "https://goplace-f33c9-default-rtdb.europe-west1.firebasedatabase.app",
-  projectId: "goplace-f33c9",
-  storageBucket: "goplace-f33c9.firebasestorage.app",
-  messagingSenderId: "978391795944",
-  appId: "1:978391795944:web:342789484e502bfb19a15d"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  databaseURL: import.meta.env.VITE_FIREBASE_DATABASE_URL,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
 }
 
 // Initialize Firebase
