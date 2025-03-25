@@ -1,5 +1,5 @@
 import { useState, useEffect, createContext } from 'react'
-import { Routes, Route, Navigate } from 'react-router-dom'
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom'
 import { onAuthStateChanged } from 'firebase/auth'
 import { auth } from './firebase/config'
 import Navbar from './components/Navbar'
@@ -13,6 +13,7 @@ import './App.css'
 export const ThemeContext = createContext(null)
 
 function App() {
+  const location = useLocation()
   const [user, setUser] = useState(null)
   const [loading, setLoading] = useState(true)
   const [theme, setTheme] = useState(() => {
@@ -20,6 +21,9 @@ function App() {
     const savedTheme = localStorage.getItem('theme')
     return savedTheme || 'dark'
   })
+
+  // Check if current route is the canvas page
+  const isCanvasPage = location.pathname.includes('/canvas/')
 
   // Effect to handle auth state changes
   useEffect(() => {
@@ -53,19 +57,19 @@ function App() {
 
   return (
     <ThemeContext.Provider value={{ theme, toggleTheme }}>
-      <div className={`h-screen max-h-screen overflow-hidden ${theme === 'dark' ? 'dark-mode' : 'light-mode'}`}>
+      <div className={`h-screen ${theme === 'dark' ? 'dark-mode' : 'light-mode'}`}>
         <Navbar user={user} />
-        <main className="h-[calc(100vh-56px)]">
+        <main className={`h-[calc(100vh-56px)] ${isCanvasPage ? 'overflow-hidden' : 'overflow-auto'}`}>
           <Routes>
             <Route path="/" element={<Home user={user} />} />
             <Route path="/canvas/:id" element={<Canvas user={user} />} />
-            <Route 
-              path="/create" 
-              element={user ? <CreateCanvas user={user} /> : <Navigate to="/login" />} 
+            <Route
+              path="/create"
+              element={user ? <CreateCanvas user={user} /> : <Navigate to="/login" />}
             />
-            <Route 
-              path="/login" 
-              element={!user ? <Login /> : <Navigate to="/" />} 
+            <Route
+              path="/login"
+              element={!user ? <Login /> : <Navigate to="/" />}
             />
           </Routes>
         </main>
