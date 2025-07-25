@@ -1,5 +1,7 @@
 # r/Place Clone with Custom Canvases
 
+<img src="./Screen Shot 2025-07-25 at 10.00.02.png"/>
+
 A collaborative pixel art platform inspired by Reddit's r/Place, where users can create and join custom canvases to draw collaboratively in real-time.
 
 ## Features
